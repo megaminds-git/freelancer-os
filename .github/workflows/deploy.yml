@@ -1,0 +1,61 @@
+name: Deploy Freelancer OS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            # ── 1. Clone or pull latest code ──────────────────────────
+            if [ ! -d "/root/freelancer-os" ]; then
+              git clone https://github.com/megaminds-git/freelancer-os.git /root/freelancer-os
+            else
+              cd /root/freelancer-os && git pull origin main
+            fi
+
+            cd /root/freelancer-os
+
+            # ── 2. Install Node dependencies ──────────────────────────
+            pnpm install
+
+            # ── 3. Generate Prisma client ─────────────────────────────
+            cd apps/api && npx prisma generate && npx prisma migrate deploy && cd ../..
+
+            # ── 4. Build API and Web ──────────────────────────────────
+            pnpm --filter @freelancer-os/api build
+            pnpm --filter @freelancer-os/web build
+
+            # ── 5. Set up Python venv for scraper ─────────────────────
+            cd apps/scraper
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+            venv/bin/pip install -r requirements.txt --quiet
+            cd ../..
+
+            # ── 6. Restart services with PM2 ──────────────────────────
+            pm2 delete freelancer-api 2>/dev/null || true
+            pm2 delete freelancer-scraper 2>/dev/null || true
+            pm2 delete freelancer-web 2>/dev/null || true
+
+            pm2 start "node apps/api/dist/index.js" --name freelancer-api
+            pm2 start "apps/scraper/venv/bin/python apps/scraper/api.py" --name freelancer-scraper
+            pm2 start "pnpm --filter @freelancer-os/web preview --host --port 5173" --name freelancer-web
+
+            pm2 save
