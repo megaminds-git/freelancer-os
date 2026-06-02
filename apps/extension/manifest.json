@@ -1,0 +1,74 @@
+{
+  "manifest_version": 3,
+  "name": "Freelancer OS Connector",
+  "version": "1.0.0",
+  "description": "Connect your Upwork & Freelancer.com accounts and scrape projects directly from your browser session.",
+  "permissions": [
+    "cookies",
+    "storage",
+    "tabs",
+    "windows",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "*://*.upwork.com/*",
+    "*://*.freelancer.com/*",
+    "http://localhost:3001/*",
+    "http://localhost:5173/*",
+    "http://localhost:3000/*",
+    "https://*/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:5173/*",
+      "http://localhost:3000/*",
+      "http://localhost:3001/*",
+      "https://*/*"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*",
+        "https://*/*"
+      ],
+      "js": ["content-scripts/app-bridge-main.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*",
+        "https://*/*"
+      ],
+      "js": ["content-scripts/app-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": ["*://*.freelancer.com/*"],
+      "js": ["content-scripts/freelancer-scraper.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Freelancer OS</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <img src="icons/icon48.png" alt="logo" class="logo" />
+      <div class="header-text">
+        <span class="header-title">Freelancer OS</span>
+        <span class="header-sub">Connector</span>
+      </div>
+    </div>
+    <div id="syncBadge" class="sync-badge sync-badge-active">
+      <span class="sync-dot"></span>Live Sync
+    </div>
+  </div>
+
+  <!-- ── API Connection ── -->
+  <div class="section">
+    <div class="section-title">API Connection</div>
+
+    <div class="field">
+      <label class="label" for="apiUrl">API URL</label>
+      <input type="url" id="apiUrl" class="input" placeholder="http://localhost:3001" />
+    </div>
+
+    <div class="field">
+      <label class="label" for="authToken">Auth Token</label>
+      <input type="password" id="authToken" class="input" placeholder="Paste your extension token..." />
+      <p class="field-hint">Settings → Chrome Extension → Generate Token</p>
+    </div>
+
+    <button id="btnSaveConnect" class="btn btn-primary btn-full">Save &amp; Test Connection</button>
+
+    <div id="apiStatus" class="status-row hidden">
+      <span id="apiStatusDot" class="dot"></span>
+      <span id="apiStatusText"></span>
+    </div>
+  </div>
+
+  <!-- ── Platform Accounts ── -->
+  <div class="section">
+    <div class="section-title">Platform Accounts</div>
+
+    <div class="platform-row" id="platformRowUpwork">
+      <div class="platform-info">
+        <span class="platform-badge platform-upwork">UW</span>
+        <div>
+          <span class="platform-name">Upwork</span>
+          <div class="platform-status-row">
+            <span id="upworkDot" class="dot dot-gray"></span>
+            <span id="upworkStatus" class="platform-status-text">Checking...</span>
+          </div>
+        </div>
+      </div>
+      <div class="platform-actions">
+        <button id="btnUpworkConnect"    class="btn btn-sm btn-primary hidden">Connect</button>
+        <button id="btnUpworkRefresh"    class="btn btn-sm btn-secondary hidden">Refresh</button>
+        <button id="btnUpworkDisconnect" class="btn btn-sm btn-danger hidden">Disconnect</button>
+      </div>
+    </div>
+
+    <div class="platform-row" id="platformRowFreelancer">
+      <div class="platform-info">
+        <span class="platform-badge platform-freelancer">FL</span>
+        <div>
+          <span class="platform-name">Freelancer</span>
+          <div class="platform-status-row">
+            <span id="freelancerDot" class="dot dot-gray"></span>
+            <span id="freelancerStatus" class="platform-status-text">Checking...</span>
+          </div>
+        </div>
+      </div>
+      <div class="platform-actions">
+        <button id="btnFreelancerConnect"    class="btn btn-sm btn-primary hidden">Connect</button>
+        <button id="btnFreelancerRefresh"    class="btn btn-sm btn-secondary hidden">Refresh</button>
+        <button id="btnFreelancerDisconnect" class="btn btn-sm btn-danger hidden">Disconnect</button>
+      </div>
+    </div>
+
+    <div id="connectMsg" class="msg hidden"></div>
+  </div>
+
+  <!-- ── Project Scraping ── -->
+  <div class="section">
+    <div class="section-title">Project Scraping</div>
+
+    <div class="field" style="position:relative;">
+      <label class="label">Keywords</label>
+      <div class="keyword-tags-box" id="keywordTagsBox">
+        <input type="text" id="keywordInput" class="keyword-input" placeholder="Add keyword..." autocomplete="off" />
+      </div>
+      <div id="suggestionsBox" class="suggestions-box hidden"></div>
+    </div>
+
+    <div class="field" style="position:relative;">
+      <label class="label">Tech Stack</label>
+      <div class="keyword-tags-box" id="techStackTagsBox">
+        <input type="text" id="techStackInput" class="keyword-input" placeholder="Add technology..." autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">Filters</label>
+      <div class="filters-toggles">
+        <label class="filter-chip" id="fcPayment">
+          <input type="checkbox" id="filterPaymentVerified" />Payment Verified
+        </label>
+        <label class="filter-chip" id="fcProfile">
+          <input type="checkbox" id="filterProfileVerified" />Profile Verified
+        </label>
+        <label class="filter-chip" id="fcDeposit">
+          <input type="checkbox" id="filterDepositMade" />Deposit Made
+        </label>
+      </div>
+      <div class="filters-numeric">
+        <div class="filter-num-row">
+          <span>Min Reviews</span>
+          <input type="number" id="filterMinReviews" class="input input-num" min="0" placeholder="0" />
+        </div>
+        <div class="filter-num-row">
+          <span>Min Rating</span>
+          <input type="number" id="filterMinRating" class="input input-num" min="0" max="5" step="0.5" placeholder="4.0" />
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">Platform</label>
+      <div class="platform-toggle-row">
+        <button type="button" id="toggleUpwork" class="platform-toggle active">
+          <span class="ptoggle-badge platform-upwork">UW</span>Upwork
+        </button>
+        <button type="button" id="toggleFreelancer" class="platform-toggle active">
+          <span class="ptoggle-badge platform-freelancer">FL</span>Freelancer
+        </button>
+      </div>
+    </div>
+
+    <div class="scrape-btn-row">
+      <button id="btnScrape" class="btn btn-primary btn-scrape-main">Start Scraping</button>
+      <button id="btnTest" class="btn btn-secondary btn-sm" title="Quick test with first keyword">Test</button>
+      <button id="btnSearchProjects" class="btn btn-secondary btn-sm btn-icon" title="Open Find Projects page">&#8599;</button>
+    </div>
+
+    <div id="scrapeStatusLine" class="scrape-status">
+      <span id="scrapeStatusText">Idle</span>
+    </div>
+
+    <div id="scrapeLastLine" class="scrape-last hidden">
+      <span id="scrapeLastText"></span>
+    </div>
+  </div>
+
+  <!-- ── Auto-Scrape Schedule ── -->
+  <div class="section section-last">
+    <div class="section-title-row">
+      <span class="section-title section-title-inline">Auto-Scrape</span>
+      <label class="switch">
+        <input type="checkbox" id="autoScrapeToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <span class="schedule-sub" id="scheduleNextRun">Disabled</span>
+
+    <div id="schedulePanel">
+      <div class="field">
+        <label class="label">Interval</label>
+        <select id="scheduleInterval" class="input">
+          <option value="5">Every 5 minutes</option>
+          <option value="10">Every 10 minutes</option>
+          <option value="15" selected>Every 15 minutes</option>
+          <option value="30">Every 30 minutes</option>
+          <option value="60">Every 1 hour</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="label">Active Days</label>
+        <div class="day-checkboxes" id="dayCheckboxes">
+          <!-- Populated by popup.js -->
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Active Hours</label>
+        <div class="time-range-row">
+          <select id="scheduleStartHour" class="input input-half"></select>
+          <span class="time-sep">to</span>
+          <select id="scheduleEndHour" class="input input-half"></select>
+        </div>
+      </div>
+
+      <div id="scrapeLastLine2" class="scrape-last hidden">
+        <span id="scrapeLastText2"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

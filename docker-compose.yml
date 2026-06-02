@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: freelancer_postgres
+    environment:
+      POSTGRES_USER: freelancer
+      POSTGRES_PASSWORD: freelancer_pass
+      POSTGRES_DB: freelancer_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U freelancer -d freelancer_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: freelancer_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build: ./apps/scraper
+    ports:
+      - "8001:8001"
+    command: python api.py
+
+  api:
+    build: ./apps/api
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://freelancer:freelancer_pass@postgres:5432/freelancer_db
+      REDIS_URL: redis://redis:6379
+      SCRAPER_URL: http://scraper:8001
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:

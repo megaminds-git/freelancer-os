@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password       String?
+  avatarUrl      String?
+  googleId       String?  @unique
+  timezone       String   @default("UTC")
+  emailVerified  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile               UserProfile?
+  proposalTemplates     ProposalTemplate[]
+  templateComponents    TemplateComponent[]
+  proposals             Proposal[]
+  projectRecords        ProjectRecord[]
+  aiAnalyses            AiAnalysis[]
+  profileReviews        ProfileReview[]
+  alertConfig           AlertConfig?
+  files                 File[]
+  analyticsEvents       AnalyticsEvent[]
+  platformConnections   PlatformConnection[]
+  oauthProviderConfigs  OAuthProviderConfig[]
+
+  @@map("users")
+}
+
+model OAuthProviderConfig {
+  id           String   @id @default(cuid())
+  userId       String
+  platform     String   // "upwork" or "freelancer"
+  clientId     String
+  clientSecret String
+  authorizeUrl String
+  tokenUrl     String
+  userInfoUrl  String?
+  scope        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@index([userId, platform])
+  @@map("oauth_provider_configs")
+}
+
+model OAuthAppConfig {
+  id              String   @id @default(cuid())
+  platformName    String   @unique @map("platform_name") // "upwork" or "freelancer"
+  clientId        String   @map("client_id")
+  clientSecret    String   @map("client_secret")
+  oauthBaseUrl    String   @map("oauth_base_url")
+  tokenUrl        String   @map("token_url")
+  redirectBaseUrl String   @map("redirect_base_url")
+  scopes          String[] @default([])
+  isActive        Boolean  @default(true) @map("is_active")
+  userInfoUrl     String?  @map("user_info_url")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([platformName, isActive])
+  @@map("oauth_app_configs")
+}
+
+model UserProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  skills     String[]
+  experience String   @default("")
+  bio        String   @default("")
+  hourlyRate Float    @default(0)
+  platforms  String[]
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model ProposalTemplate {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  category   String
+  strategy   String
+  components Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("proposal_templates")
+}
+
+model TemplateComponent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  content   String
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("template_components")
+}
+
+model Proposal {
+  id                 String   @id @default(cuid())
+  userId             String
+  projectTitle       String
+  projectDescription String
+  clientCountry      String   @default("Unknown")
+  clientTimezone     String   @default("UTC")
+  techStack          String[]
+  bidAmount          Float
+  currency           String   @default("USD")
+  content            String
+  status             String   @default("pending")
+  platform           String   @default("upwork")
+  isReference        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  expiresAt          DateTime
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files File[]
+
+  @@index([userId, createdAt])
+  @@map("proposals")
+}
+
+model ProjectRecord {
+  id                 String   @id @default(cuid())
+  userId             String
+  title              String
+  description        String
+  clientCountry      String   @default("Unknown")
+  clientTimezone     String   @default("UTC")
+  techStack          String[]
+  bidAmount          Float    @default(0)
+  platform           String   @default("upwork")
+  url                String?
+  scrapedAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scrapedAt])
+  @@map("project_records")
+}
+
+model AiAnalysis {
+  id                   String   @id @default(cuid())
+  userId               String
+  projectTitle         String
+  projectDescription   String
+  recommendedStructure String[]
+  biddingStrategy      String
+  effortLevel          String
+  hoursEstimate        Int
+  techFitScore         Int
+  matchedSkills        String[]
+  bidRangeMin          Float
+  bidRangeMax          Float
+  currency             String   @default("USD")
+  redFlags             String[]
+  winningAngle         String
+  createdAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_analyses")
+}
+
+model ProfileReview {
+  id                  String   @id @default(cuid())
+  userId              String
+  overallScore        Int
+  headlineScore       Int
+  bioScore            Int
+  skillsScore         Int
+  portfolioScore      Int
+  completenessScore   Int
+  improvements        Json     @default("[]")
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("profile_reviews")
+}
+
+model AlertConfig {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  countries            String[]
+  timezones            String[]
+  activeHoursStart     Int      @default(8)
+  activeHoursEnd       Int      @default(20)
+  notificationChannels String[]
+  enabled              Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("alert_configs")
+}
+
+model File {
+  id         String   @id @default(cuid())
+  userId     String
+  proposalId String?
+  s3Key      String?
+  filename   String
+  mimeType   String
+  size       Int
+  url        String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposal Proposal? @relation(fields: [proposalId], references: [id])
+
+  @@index([userId])
+  @@map("files")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  eventType String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, eventType, createdAt])
+  @@map("analytics_events")
+}
+
+model PlatformConnection {
+  id                     String   @id @default(cuid())
+  userId                 String
+  platform               String   // "upwork" or "freelancer"
+  accessToken            String?
+  refreshToken           String?
+  sessionToken           String?  @map("session_token")
+  cookies                String?
+  platformUserId         String?  @map("platform_user_id")
+  externalId             String?  // Legacy compatibility for UI/API
+  email                  String?  // Email from external platform
+  scopes                 String[] @default([])
+  connectedAccountStatus String   @default("connected") @map("connected_account_status")
+  connectedAt            DateTime @default(now())
+  expiresAt              DateTime?
+  expiryTime             DateTime? @map("expiry_time")
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@index([userId, platform])
+  @@map("platform_connections")
+}
