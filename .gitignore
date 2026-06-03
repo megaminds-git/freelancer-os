@@ -26,4 +26,5 @@ apps/**/.env.*
 apps/**/__pycache__/
 apps/**/.venv/
 graphify-out/
-git rm -r --cached apps/scraper/.chrome_profiles/
+apps/scraper/.chrome_profiles/
+apps/scraper/.sessions/
