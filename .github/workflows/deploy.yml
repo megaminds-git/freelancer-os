@@ -58,7 +58,7 @@ jobs:
             pm2 delete freelancer-scraper 2>/dev/null || true
             pm2 delete freelancer-web 2>/dev/null || true
 
-            pm2 start "node_modules/.bin/tsx apps/api/src/index.ts" --name freelancer-api --cwd /root/freelancer-os
+            pm2 start "/root/freelancer-os/node_modules/.bin/tsx /root/freelancer-os/apps/api/src/index.ts" --name freelancer-api
             pm2 start "apps/scraper/venv/bin/python apps/scraper/api.py" --name freelancer-scraper
             pm2 start "pnpm --filter @freelancer-os/web preview --host --port 5173" --name freelancer-web
 
