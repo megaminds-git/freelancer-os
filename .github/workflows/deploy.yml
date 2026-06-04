@@ -32,12 +32,7 @@ jobs:
 
             cd /root/freelancer-os
 
-            # ── 2. Restore .env files from server backups ─────────────
-            cp /root/api.env.bak apps/api/.env
-            cp /root/web.env.bak apps/web/.env
-            cp /root/scraper.env.bak apps/scraper/.env
-
-            # ── 3. Install Node dependencies ──────────────────────────
+            # ── 2. Install Node dependencies ──────────────────────────
             pnpm install
 
             # ── 4. Generate Prisma client and run migrations ──────────
