@@ -10,6 +10,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  preview: {
+    host: true,
+    port: 5173,
+    allowedHosts: ['freelanceros.megaminds.live'],
+  },
   server: {
     port: 5173,
     proxy: {
